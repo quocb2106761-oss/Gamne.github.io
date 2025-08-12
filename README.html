@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chúc Mừng Sinh Nhật Gấm!</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: linear-gradient(135deg, #ff6f91, #ffcc70);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: 'Dancing Script', cursive;
+    }
+    #greeting {
+      position: absolute;
+      text-align: center;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      z-index: 10;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    #greeting h1 {
+      font-size: 4em;
+      margin-bottom: 10px;
+    }
+    #greeting p {
+      font-size: 2em;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div id="greeting">
+    <h1>Chúc Mừng Sinh Nhật Gấm!</h1>
+    <p>Chúc bạn một ngày sinh nhật rực rỡ, tràn đầy niềm vui!</p>
+  </div>
+  <audio id="birthdaySong" autoplay loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    Trình duyệt của bạn không hỗ trợ phát âm thanh.
+  </audio>
+  <script>
+    let particles = [];
+    let fireworks = [];
+
+    function setup() {
+      createCanvas(windowWidth, windowHeight);
+      for (let i = 0; i < 100; i++) {
+        particles.push(new Particle());
+      }
+    }
+
+    function draw() {
+      clear();
+      // Add new fireworks randomly from both sides
+      if (random(1) < 0.05) {
+        fireworks.push(new Firework('left'));
+      }
+      if (random(1) < 0.05) {
+        fireworks.push(new Firework('right'));
+      }
+      // Update and show particles (falling confetti)
+      for (let particle of particles) {
+        particle.update();
+        particle.show();
+      }
+      // Update and show fireworks
+      for (let i = fireworks.length - 1; i >= 0; i--) {
+        fireworks[i].update();
+        fireworks[i].show();
+        if (fireworks[i].done()) {
+          fireworks.splice(i, 1);
+        }
+      }
+    }
+
+    function windowResized() {
+      resizeCanvas(windowWidth, windowHeight);
+    }
+
+    class Particle {
+      constructor() {
+        this.x = random(width);
+        this.y = random(-500, -50);
+        this.vx = random(-1, 1);
+        this.vy = random(2, 5);
+        this.size = random(5, 10);
+        this.color = color(random(255), random(255), random(255), 200);
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.y > height) {
+          this.y = random(-500, -50);
+          this.x = random(width);
+        }
+      }
+
+      show() {
+        noStroke();
+        fill(this.color);
+        ellipse(this.x, this.y, this.size);
+      }
+    }
+
+    class Firework {
+      constructor(side) {
+        this.exploded = false;
+        this.particles = [];
+        if (side === 'left') {
+          this.firework = new FireworkParticle(0, height, random(3, 5), random(-2, -1), random(-8, -4));
+        } else {
+          this.firework = new FireworkParticle(width, height, random(-5, -3), random(-2, -1), random(-8, -4));
+        }
+      }
+
+      done() {
+        return this.exploded && this.particles.length === 0;
+      }
+
+      update() {
+        if (!this.exploded) {
+          this.firework.update();
+          if (this.firework.vy >= 0) {
+            this.exploded = true;
+            this.explode();
+          }
+        }
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          this.particles[i].update();
+          if (this.particles[i].done()) {
+            this.particles.splice(i, 1);
+          }
+        }
+      }
+
+      explode() {
+        for (let i = 0; i < 50; i++) {
+          let p = new FireworkParticle(this.firework.x, this.firework.y, random(-2, 2), random(-2, 2), 0, true);
+          this.particles.push(p);
+        }
+      }
+
+      show() {
+        if (!this.exploded) {
+          this.firework.show();
+        }
+        for (let p of this.particles) {
+          p.show();
+        }
+      }
+    }
+
+    class FireworkParticle {
+      constructor(x, y, vx, vy, gravity = 0.1, exploded = false) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.gravity = gravity;
+        this.exploded = exploded;
+        this.lifespan = exploded ? 100 : 255;
+        this.color = color(random(255), random(255), random(255));
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += this.gravity;
+        if (this.exploded) {
+          this.lifespan -= 2;
+        }
+      }
+
+      done() {
+        return this.lifespan <= 0;
+      }
+
+      show() {
+        noStroke();
+        fill(this.color, this.lifespan);
+        ellipse(this.x, this.y, this.exploded ? 3 : 5);
+      }
+    }
+  </script>
+</body>
+</html>
